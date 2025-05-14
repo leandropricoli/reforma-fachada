@@ -29,7 +29,11 @@
         
         .locked {
             filter: brightness(0.8);
-            pointer-events: none;
+        }
+        
+        .locked-input {
+            background-color: #f3f4f6;
+            cursor: not-allowed;
         }
         
         textarea {
@@ -130,6 +134,16 @@
             font-weight: bold;
             font-size: 0.9rem;
         }
+        
+        .scroll-container {
+            overflow-y: auto;
+        }
+        
+        .item-number {
+            font-weight: bold;
+            min-width: 40px;
+            display: inline-block;
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -215,31 +229,31 @@
             completed: 0
         };
         
-        // Generate blocks grouped by final (1-6)
+        // Generate blocks grouped by final (1-6) with items in descending order
         const blocks = [
             { 
                 name: "FINAL 1", 
-                items: [11, 21, 31, 41, 51, 61, 71, 81, 91, 101, 111, 121, 131, 141, 151, 161, 171, 181, 191, 201, 211, 221] 
+                items: [221, 211, 201, 191, 181, 171, 161, 151, 141, 131, 121, 111, 101, 91, 81, 71, 61, 51, 41, 31, 21, 11] 
             },
             { 
                 name: "FINAL 2", 
-                items: [12, 22, 32, 42, 52, 62, 72, 82, 92, 102, 112, 122, 132, 142, 152, 162, 172, 182, 192, 202, 212, 222] 
+                items: [222, 212, 202, 192, 182, 172, 162, 152, 142, 132, 122, 112, 102, 92, 82, 72, 62, 52, 42, 32, 22, 12] 
             },
             { 
                 name: "FINAL 3", 
-                items: [13, 23, 33, 43, 53, 63, 73, 83, 93, 103, 113, 123, 133, 143, 153, 163, 173, 183, 193, 203, 213, 223] 
+                items: [223, 213, 203, 193, 183, 173, 163, 153, 143, 133, 123, 113, 103, 93, 83, 73, 63, 53, 43, 33, 23, 13] 
             },
             { 
                 name: "FINAL 4", 
-                items: [14, 24, 34, 44, 54, 64, 74, 84, 94, 104, 114, 124, 134, 144, 154, 164, 174, 184, 194, 204, 214, 224] 
+                items: [224, 214, 204, 194, 184, 174, 164, 154, 144, 134, 124, 114, 104, 94, 84, 74, 64, 54, 44, 34, 24, 14] 
             },
             { 
                 name: "FINAL 5", 
-                items: [15, 25, 35, 45, 55, 65, 75, 85, 95, 105, 115, 125, 135, 145, 155, 165, 175, 185, 195, 205, 215, 225] 
+                items: [225, 215, 205, 195, 185, 175, 165, 155, 145, 135, 125, 115, 105, 95, 85, 75, 65, 55, 45, 35, 25, 15] 
             },
             { 
                 name: "FINAL 6", 
-                items: [16, 26, 36, 46, 56, 66, 76, 86, 96, 106, 116, 126, 136, 146, 156, 166, 176, 186, 196, 206, 216, 226] 
+                items: [226, 216, 206, 196, 186, 176, 166, 156, 146, 136, 126, 116, 106, 96, 86, 76, 66, 56, 46, 36, 26, 16] 
             }
         ];
         
@@ -275,7 +289,7 @@
                 
                 // Items in the block
                 const itemsContainer = document.createElement('div');
-                itemsContainer.className = 'space-y-4 max-h-[500px] overflow-y-auto pr-2';
+                itemsContainer.className = 'space-y-4 max-h-[500px] overflow-y-auto pr-2 scroll-container';
                 
                 block.items.forEach(item => {
                     const itemElement = document.createElement('div');
@@ -284,7 +298,7 @@
                     
                     itemElement.innerHTML = `
                         <div class="flex justify-between items-center mb-2">
-                            <span class="font-bold">${item}</span>
+                            <span class="font-bold item-number">${item}</span>
                             <button 
                                 class="status-btn bg-red-500 text-white px-3 py-1 rounded" 
                                 data-status="0" 
@@ -459,10 +473,41 @@
                 lockBtn.innerHTML = '<i class="fas fa-lock mr-2"></i> Desbloquear';
                 document.getElementById('appContainer').classList.add('locked');
                 document.getElementById('lockTimestamp').textContent = `Bloqueado em: ${timestamp}`;
+                
+                // Disable all inputs and buttons
+                const inputs = document.querySelectorAll('input, textarea, .status-btn');
+                inputs.forEach(input => {
+                    input.disabled = true;
+                    if (input.tagName === 'INPUT' || input.tagName === 'TEXTAREA') {
+                        input.classList.add('locked-input');
+                    }
+                });
+                
+                // Disable WhatsApp buttons
+                const whatsappBtns = document.querySelectorAll('.whatsapp-btn');
+                whatsappBtns.forEach(btn => {
+                    btn.onclick = (e) => e.preventDefault();
+                });
             } else {
                 lockBtn.innerHTML = '<i class="fas fa-lock-open mr-2"></i> Bloquear';
                 document.getElementById('appContainer').classList.remove('locked');
                 document.getElementById('lockTimestamp').textContent = `Desbloqueado em: ${timestamp}`;
+                
+                // Enable all inputs and buttons
+                const inputs = document.querySelectorAll('input, textarea, .status-btn');
+                inputs.forEach(input => {
+                    input.disabled = false;
+                    if (input.tagName === 'INPUT' || input.tagName === 'TEXTAREA') {
+                        input.classList.remove('locked-input');
+                    }
+                });
+                
+                // Enable WhatsApp buttons
+                const whatsappBtns = document.querySelectorAll('.whatsapp-btn');
+                whatsappBtns.forEach(btn => {
+                    btn.onclick = null;
+                    updateWhatsAppLinks();
+                });
             }
             
             // Save lock state to Firebase
@@ -615,6 +660,21 @@
                                 if (isLocked) {
                                     lockBtn.innerHTML = '<i class="fas fa-lock mr-2"></i> Desbloquear';
                                     document.getElementById('appContainer').classList.add('locked');
+                                    
+                                    // Disable all inputs and buttons
+                                    const inputs = document.querySelectorAll('input, textarea, .status-btn');
+                                    inputs.forEach(input => {
+                                        input.disabled = true;
+                                        if (input.tagName === 'INPUT' || input.tagName === 'TEXTAREA') {
+                                            input.classList.add('locked-input');
+                                        }
+                                    });
+                                    
+                                    // Disable WhatsApp buttons
+                                    const whatsappBtns = document.querySelectorAll('.whatsapp-btn');
+                                    whatsappBtns.forEach(btn => {
+                                        btn.onclick = (e) => e.preventDefault();
+                                    });
                                 } else {
                                     lockBtn.innerHTML = '<i class="fas fa-lock-open mr-2"></i> Bloquear';
                                     document.getElementById('appContainer').classList.remove('locked');
@@ -681,9 +741,40 @@
                         if (isLocked) {
                             lockBtn.innerHTML = '<i class="fas fa-lock mr-2"></i> Desbloquear';
                             document.getElementById('appContainer').classList.add('locked');
+                            
+                            // Disable all inputs and buttons
+                            const inputs = document.querySelectorAll('input, textarea, .status-btn');
+                            inputs.forEach(input => {
+                                input.disabled = true;
+                                if (input.tagName === 'INPUT' || input.tagName === 'TEXTAREA') {
+                                    input.classList.add('locked-input');
+                                }
+                            });
+                            
+                            // Disable WhatsApp buttons
+                            const whatsappBtns = document.querySelectorAll('.whatsapp-btn');
+                            whatsappBtns.forEach(btn => {
+                                btn.onclick = (e) => e.preventDefault();
+                            });
                         } else {
                             lockBtn.innerHTML = '<i class="fas fa-lock-open mr-2"></i> Bloquear';
                             document.getElementById('appContainer').classList.remove('locked');
+                            
+                            // Enable all inputs and buttons
+                            const inputs = document.querySelectorAll('input, textarea, .status-btn');
+                            inputs.forEach(input => {
+                                input.disabled = false;
+                                if (input.tagName === 'INPUT' || input.tagName === 'TEXTAREA') {
+                                    input.classList.remove('locked-input');
+                                }
+                            });
+                            
+                            // Enable WhatsApp buttons
+                            const whatsappBtns = document.querySelectorAll('.whatsapp-btn');
+                            whatsappBtns.forEach(btn => {
+                                btn.onclick = null;
+                                updateWhatsAppLinks();
+                            });
                         }
                         
                         if (data[item].lastLockTimestamp) {
