@@ -144,6 +144,15 @@
             min-width: 40px;
             display: inline-block;
         }
+        
+        .export-btn {
+            transition: all 0.2s ease;
+        }
+        
+        .export-btn:hover {
+            transform: scale(1.1);
+            color: #3b82f6;
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -270,9 +279,23 @@
                 const blockHeader = document.createElement('div');
                 blockHeader.className = 'block-header flex justify-between items-center mb-4 pb-2 border-b';
                 
+                const blockTitleContainer = document.createElement('div');
+                blockTitleContainer.className = 'flex items-center gap-2';
+                
                 const blockName = document.createElement('h2');
                 blockName.className = 'font-bold text-lg';
                 blockName.textContent = block.name;
+                
+                // Export button
+                const exportBtn = document.createElement('button');
+                exportBtn.className = 'export-btn text-gray-500 hover:text-blue-500';
+                exportBtn.innerHTML = '<i class="fas fa-file-export"></i>';
+                exportBtn.title = 'Exportar dados deste bloco';
+                exportBtn.dataset.block = block.name;
+                exportBtn.addEventListener('click', () => exportBlockData(block.name));
+                
+                blockTitleContainer.appendChild(blockName);
+                blockTitleContainer.appendChild(exportBtn);
                 
                 const blockStatus = document.createElement('div');
                 blockStatus.className = 'flex space-x-1';
@@ -283,7 +306,7 @@
                 `;
                 blockStatus.id = `status-${block.name.replace(' ', '-')}`;
                 
-                blockHeader.appendChild(blockName);
+                blockHeader.appendChild(blockTitleContainer);
                 blockHeader.appendChild(blockStatus);
                 blockElement.appendChild(blockHeader);
                 
@@ -347,6 +370,62 @@
                 blockElement.appendChild(itemsContainer);
                 appContainer.appendChild(blockElement);
             });
+        }
+        
+        // Export block data to TXT file
+        function exportBlockData(blockName) {
+            const block = blocks.find(b => b.name === blockName);
+            if (!block) return;
+            
+            // Group items by status
+            const groupedItems = {
+                notStarted: [],
+                inProgress: [],
+                completed: []
+            };
+            
+            block.items.forEach(item => {
+                const button = document.querySelector(`.status-btn[data-item="${item}"]`);
+                if (button) {
+                    const status = parseInt(button.dataset.status);
+                    
+                    switch(status) {
+                        case 0:
+                            groupedItems.notStarted.push(item);
+                            break;
+                        case 1:
+                            groupedItems.inProgress.push(item);
+                            break;
+                        case 2:
+                            groupedItems.completed.push(item);
+                            break;
+                    }
+                }
+            });
+            
+            // Create TXT content
+            let txtContent = `Relatório de Status - ${blockName}\n`;
+            txtContent += `Gerado em: ${new Date().toLocaleString()}\n\n`;
+            
+            txtContent += `=== NÃO INICIADOS (${groupedItems.notStarted.length}) ===\n`;
+            txtContent += groupedItems.notStarted.join(', ') + '\n\n';
+            
+            txtContent += `=== EM ANDAMENTO (${groupedItems.inProgress.length}) ===\n`;
+            txtContent += groupedItems.inProgress.join(', ') + '\n\n';
+            
+            txtContent += `=== FINALIZADOS (${groupedItems.completed.length}) ===\n`;
+            txtContent += groupedItems.completed.join(', ') + '\n';
+            
+            // Create download link
+            const blob = new Blob([txtContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Status_${blockName.replace(' ', '_')}_${new Date().toISOString().slice(0,10)}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
         }
         
         // Format current date and time
